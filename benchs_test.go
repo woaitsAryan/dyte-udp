@@ -186,7 +186,7 @@ func BenchmarkSample(b *testing.B) {
 
 	// Do something here
 
-	testPort := 40102
+	testPort := 40101
 
 	conn, _ := net.ListenUDP("udp", &net.UDPAddr{
 		IP:   net.IPv4(127, 0, 0, 1),
@@ -205,19 +205,13 @@ func BenchmarkSample(b *testing.B) {
 	writer := func() {
 		// You can modify the following code inside this function
 		// Start of code that you are permitted to modify
-		writeChan := make(chan []byte, uint8(readersCount))
-		for i := uint8(0); i < uint8(readersCount); i++ {
+		readersInt := uint8(readersCount)
+		for i := uint8(0); i < readersInt; i++ {
 			go func(i uint8) {
 				buf := getTestMsg()
-				writeChan <- buf
-			}(uint8(i))
+				conn.WriteTo(buf, &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1), Port: ports[i]})
+			}(i)
 		}
-
-		for i := uint8(0); i < uint8(readersCount); i++ {
-			msg := <-writeChan
-			conn.WriteTo(msg, &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1), Port: ports[i]})
-		}
-
 		// End of code that you are permitted to modify
 		waitForReaders(readChan, b) // DO NOT EDIT THIS LINE
 	}
